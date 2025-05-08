@@ -1,0 +1,56 @@
+DATA:
+  DATASET: "food_subset"
+  NUM_CLASSES: 3
+  SEPARATE_CLASSES: False
+
+  BATCH_SIZE: 96
+
+  USE_CLASS_WEIGHTS: False
+  USE_GROUP_WEIGHTS: False
+  CLASSES: ['fish', 'white_meat', 'red_meat']
+  SUBDIR: 'food-101'
+  FOOD_SUBSET_DIR: 'food-101'
+  SPLIT: 'train-meat'
+  MEAT: 'meat'
+
+  ATTENTION_DIR: "clip_rn50_attention_gradcam_17.02_gals_meat"
+
+EXP:
+  APPROACH: "generic"
+  NUM_TRIALS: 1
+
+  MODEL: "resnet50"
+  PRETRAINED: True
+
+  LOSSES:
+    # LOG setting is used to compute & log loss, but without including it
+    # in the actual training loss backward pass. It is also not added to the
+    # "total_loss" metrics.
+    # Throws error if both LOG and COMPUTE are True.
+
+    CLASSIFICATION:
+      WEIGHT: 1
+    GRADIENT_OUTSIDE:
+      COMPUTE: True
+      LOG: False
+      WEIGHT: 10000
+      CRITERION: "L1"
+      GT: "clip_rn50"
+      COMBINE_ATT_MODE: "average_nonzero"
+
+
+  NUM_EPOCHS: 150
+  OPTIMIZER: "SGD"
+  WEIGHT_DECAY: 1e-5
+  MOMENTUM: 0.9
+
+  SCHEDULER: "NONE"
+
+  BASE:
+    LR: 0.005
+
+  CLASSIFIER:
+    LR: 0.0001
+
+
+

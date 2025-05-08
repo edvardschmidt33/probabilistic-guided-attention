@@ -1,0 +1,22 @@
+requests==2.26.0
+ftfy==6.0.3
+jupyter==1.0.0
+#matplotlib>=3.4.3
+nltk==3.6.2
+#numpy>=1.22.1
+#omegaconf>=2.1.1
+opencv-python
+pandas>=1.5.0  # Updated to be compatible with Python 3.11
+#Pillow>=8.3.2
+pycocotools
+pytest==6.2.5
+regex==2021.8.28
+scikit_learn>=0.24.2
+#scipy>=1.7.1
+#scikit-image==0.18.3
+torchray==1.0.0.2
+torch #==2.0.1  # Loosen version constraints
+torchvision #==0.15.0  # Loosen version constraints
+tqdm==4.62.2
+wandb
+

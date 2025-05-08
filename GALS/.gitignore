@@ -1,0 +1,11 @@
+/data/
+*.err
+*.out
+*.sh
+/wandb/
+/old_files/
+/eval/
+/gals_repo/
+/alvis_jobs/
+/berzelius_jobs/
+__pycache__/
