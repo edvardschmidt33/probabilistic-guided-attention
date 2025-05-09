@@ -1,0 +1,23 @@
+name: prob3
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.8  # Adjust as needed
+  - numpy>=1.19.0
+  - matplotlib>=3.3.0
+  - tqdm>=4.50.0
+  - munch>=2.5.0
+  - pillow>=8.0.0
+  - ujson>=5.0.0
+  - nltk>=3.6.0
+  - scikit-learn>=0.24.0
+  - pandas>=1.2.0
+  - scipy>=1.6.0
+  - opencv  # conda-forge provides opencv, version will match >=4.5.0
+  - tensorboard>=2.4.0
+  - pip
+  - pip:
+      - pycocotools>=2.0.0
+      - transformers>=4.0.0
+      - fire>=0.4.0

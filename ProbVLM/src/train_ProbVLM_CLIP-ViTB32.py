@@ -16,7 +16,7 @@ import numpy as np
 #from ds import prepare_coco_dataloaders_extra 
 #load_mnist_data_loader, prepare_flickr_dataloaders, prepare_cub_dataloaders, prepare_flo_dataloaders
 
-from utils import *
+from utils import *  # "losses" missing 
 from networks import *
 from train_probVLM import *
 
@@ -71,7 +71,7 @@ train_ProbVLM(
     init_lr=8e-5,
     num_epochs=200,
     eval_every=5,
-    ckpt_path='/Users/Edvard/Desktop/Kandidatarbete/PARIC/ckpt/ProbVLM_Coco_extra_26.11', #change address to local adress
+    ckpt_path='/cephyr/users/schmidte/Alvis/Paric_nolavis/ckpt/ProbVLM_Coco_extra_26.11', #change address to local adress
     T1=1e0,
     T2=1e-4
 )

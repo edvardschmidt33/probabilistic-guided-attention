@@ -1,10 +1,3 @@
-"""MS-COCO image-to-caption retrieval dataset code
-
-reference codes:
-https://github.com/pytorch/vision/blob/v0.2.2_branch/torchvision/datasets/coco.py
-https://github.com/yalesong/pvse/blob/master/data.py
-"""
-
 import os
 from os.path import join as ospj
 try:
@@ -17,12 +10,24 @@ from pycocotools.coco import COCO
 
 import torch
 from torch.utils.data import Dataset
+import sys
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
-from lavis.models import load_model_and_preprocess
-device='cuda'
-model, vis_processors, txt_processors = load_model_and_preprocess(name="blip_feature_extractor", model_type="base", is_eval=True, device=device)
+# Add it to the system path
+sys.path.insert(0, parent_dir)
+
+import clip
+from torchvision import transforms
 
 
+# Initialize CLIP preprocessing
+_, preprocess = clip.load("ViT-B/32", device="cpu")
+vis_processors = {"eval": preprocess}
+
+# Simple text preprocessing
+def text_preprocess(text):
+    return text.lower().strip()
+txt_processors = {"eval": text_preprocess}
 class CocoCaptionsCap(Dataset):
     """`MS Coco Captions <http://mscoco.org/dataset/#captions-challenge2015>`_ Dataset.
     Args:
@@ -229,3 +234,77 @@ class CocoBboxes(CocoCaptionsCap):
             return img, target, caption, bboxes, bbox_cats
         else:
             return img, target, bboxes
+
+def prepare_coco_dataloaders(dataloader_config, dataset_root, vocab_path=None, caption_root=None):
+    """
+    Prepare COCO dataloaders for training, validation and testing.
+    
+    Args:
+        dataloader_config: Configuration for dataloaders
+        dataset_root: Root directory of the COCO dataset
+        vocab_path: Path to vocabulary file (optional)
+        caption_root: Path to caption files (optional)
+    
+    Returns:
+        Dictionary containing train, validation and test dataloaders
+    """
+    from torch.utils.data import DataLoader
+    
+    # Define paths
+    train_ann = os.path.join(dataset_root, 'annotations', 'captions_train2014.json')
+    val_ann = os.path.join(dataset_root, 'annotations', 'captions_val2014.json')
+    train_img = os.path.join(dataset_root, 'train2014')
+    val_img = os.path.join(dataset_root, 'val2014')
+    
+    # Create datasets
+    train_dataset = CocoCaptionsCap(
+        root=train_img,
+        annFile=train_ann,
+        transform=None,
+        target_transform=None
+    )
+    
+    val_dataset = CocoCaptionsCap(
+        root=val_img,
+        annFile=val_ann,
+        transform=None,
+        target_transform=None
+    )
+    
+    test_dataset = CocoCaptionsCap(
+        root=val_img,
+        annFile=val_ann,
+        transform=None,
+        target_transform=None
+    )
+    
+    # Create dataloaders
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=dataloader_config['batch_size'],
+        shuffle=dataloader_config['traindata_shuffle'],
+        num_workers=4,
+        pin_memory=True
+    )
+    
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=dataloader_config['batch_size'],
+        shuffle=False,
+        num_workers=4,
+        pin_memory=True
+    )
+    
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=dataloader_config['batch_size'],
+        shuffle=False,
+        num_workers=4,
+        pin_memory=True
+    )
+    
+    return {
+        'train': train_loader,
+        'val': val_loader,
+        'test': test_loader
+    }

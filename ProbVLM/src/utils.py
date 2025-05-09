@@ -14,7 +14,7 @@ import ds
 from ds import prepare_flickr_dataloaders, prepare_cub_dataloaders, prepare_flo_dataloaders, prepare_coco_dataloaders_extra, prepare_cub_dataloaders_extra, prepare_foodredmeat_dataloaders, prepare_foodmeat_dataloaders
 from ds_clip import prepare_coco_dataloaders
 from tqdm import tqdm
-from losses import *
+from losses import * # Missing
 
 def get_pred_ranks(q_features, g_features, recall_ks=(1,5,10)):
     """

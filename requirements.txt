@@ -1,0 +1,12 @@
+# conda packages
+matplotlib>=3.3.0
+tqdm>=4.50.0
+munch>=2.5.0
+pillow>=8.0.0
+ujson>=5.0.0
+nltk>=3.6.0
+scikit-learn>=0.24.0
+pandas>=1.2.0
+scipy>=1.6.0
+opencv
+tensorboard>=2.4.0
