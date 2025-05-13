@@ -13,6 +13,9 @@
 # Checkpoint folders
 ckpt/
 checkpoints/
+logs/
+emb_caching/
+embeddings/
 
 **/ckpt/
 **/*.log

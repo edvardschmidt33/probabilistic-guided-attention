@@ -11,16 +11,14 @@ import torch.nn.functional as F
 
 import clip
 import ds 
-from ds import prepare_cub_dataloaders_extra #prepare_coco_dataloaders, prepare_flickr_dataloaders, prepare_cub_dataloaders, prepare_flo_dataloaders, 
-from ds_clip import prepare_coco_dataloaders
+# from ds import prepare_cub_dataloaders_extra, prepare_coco_dataloaders_extra #prepare_coco_dataloaders, prepare_flickr_dataloaders, prepare_cub_dataloaders, prepare_flo_dataloaders, 
 from tqdm import tqdm
 from losses import *
 from utils import *
 from transformers import CLIPTokenizer  # Make sure to import the CLIP tokenizer
 
-load_mnist_data_loader = None
 ckpt_path = '../ckpt/ProbVLM'
-os.makedirs(os.path.dirname(ckpt_path), exist_ok=True)
+os.makedirs(ckpt_path, exist_ok=True)
 
 def train_ProbVLM(
     CLIP_Net,
@@ -38,7 +36,7 @@ def train_ProbVLM(
     cross_modal_lambda=1e-4,
     T1=1e0,
     T2=5e-2,
-    use_cached_embeddings= False
+    use_cached_embeddings= True
 ):
     CLIP_Net.to(device)
     CLIP_Net.eval()
@@ -65,18 +63,15 @@ def train_ProbVLM(
                     break
                 tepoch.set_description('Epoch {}'.format(eph))
                 ##
-                xI, xT  = batch[0].to(device), batch[1].to(device)
-          
+                xI, xT  = batch['image'].to(device), batch['tokenized label'].to(device)
+
                 if use_cached_embeddings:
                     xfI, xfT = xI, xT
                     xfI = xfI.float()
                     xfT = xfT.float()
-                else:    
+                else: 
                     with torch.no_grad():
                         xfI, xfT = CLIP_Net(xI, xT)
-                        print('Using CLIP')
-                
-                    
                 
                 # Process text input xT using the tokenizer
                 # Tokenize xT with padding/truncation to match the model's expected input size
@@ -85,7 +80,6 @@ def train_ProbVLM(
 
                 # xI, xT = xI.type(dtype), xT.type(dtype)
                 # pass them through the network
-
                 (img_mu, img_1alpha, img_beta), (txt_mu, txt_1alpha, txt_beta) = BayesCap_Net(xfI, xfT)
                 
                 optimizer.zero_grad()
@@ -113,7 +107,6 @@ def train_ProbVLM(
                 eval_loader,
                 device=device,
                 dtype=dtype,
-                use_cached_embeddings = use_cached_embeddings
             )
             print('current score: {} | Last best score: {}'.format(curr_score, score))
             if curr_score <= score:
@@ -128,7 +121,7 @@ def eval_ProbVLM(
     eval_loader,
     device='cuda',
     dtype=torch.cuda.FloatTensor,
-    use_cached_embeddings = False
+    use_cached_embeddings = True
 ):
     CLIP_Net.to(device)
     CLIP_Net.eval()
@@ -144,18 +137,17 @@ def eval_ProbVLM(
         for (idx, batch) in enumerate(tepoch):
             tepoch.set_description('Validating ...')
             ##
-            xI, xT  = batch[0].to(device), batch[1].to(device)
+            xI, xT  = batch['image'].to(device), batch['tokenized label'].to(device)
             
             # pass them through the network
             if use_cached_embeddings:
                 xfI, xfT = xI, xT
                 xfI = xfI.float()
                 xfT = xfT.float()
-            else:    
+            else:
                 with torch.no_grad():
                     xfI, xfT = CLIP_Net(xI, xT)
-
-            with torch.no_grad():
+            with torch.no_grad():    
                 (img_mu, img_1alpha, img_beta), (txt_mu, txt_1alpha, txt_beta) = BayesCap_Net(xfI, xfT)
                 
             n_batch = img_mu.shape[0]
@@ -173,10 +165,6 @@ def eval_ProbVLM(
             )
         )
     return mean_mae
-
-
-
-
 
 def train_ProbVLM_HF(
     CLIP_Net,
