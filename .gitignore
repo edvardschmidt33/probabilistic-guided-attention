@@ -1,21 +1,3 @@
-# Shell scripts
-*.sh
-
-# Singularity definition files
-*.def
-
-# Singularity image files
-*.sif
-
-# Log files
-*.log
-
-# Checkpoint folders
-ckpt/
-checkpoints/
-logs/
-emb_caching/
-embeddings/
-
-**/ckpt/
-**/*.log
+*
+!BayesVLM/
+!.gitignore
