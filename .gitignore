@@ -1,4 +1,4 @@
 *
-!BayesVLM/
-!BayesVLM/**
-!.gitignore
+\!BayesVLM/
+\!BayesVLM/**
+\!.gitignore
