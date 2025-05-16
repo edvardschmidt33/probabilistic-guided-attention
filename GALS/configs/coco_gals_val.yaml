@@ -4,7 +4,7 @@ DATA:
   DATASET: "coco_gender"
   NUM_CLASSES: 3
 
-  BATCH_SIZE: 96
+  BATCH_SIZE: 8000
 
   ATTENTION_DIR: "NONE"
 

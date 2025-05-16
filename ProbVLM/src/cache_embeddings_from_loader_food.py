@@ -4,12 +4,12 @@ import sys
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, parent_dir)
 import clip
+from clip.simple_tokenizer import SimpleTokenizer
+tokenizer = SimpleTokenizer()
 
 import json
 from torch.utils.data import DataLoader
 import pickle
-from clip.simple_tokenizer import SimpleTokenizer
-tokenizer = SimpleTokenizer()
 
 def cache_embeddings_from_loaders(loaders_path, output_dir):
     # Load the existing dataloaders
@@ -44,8 +44,10 @@ def cache_embeddings_from_loaders(loaders_path, output_dir):
         current_img_index = 0
 
         with torch.no_grad():
-            for batch_idx, (images, texts, _, ann_ids, img_ids) in enumerate(dataloader):
-                print(f'Processing batch {batch_idx+1}/{len(dataloader)}', flush=True)
+            for batch_idx, batch in enumerate(dataloader):
+                images, texts = batch['image'], batch['tokenized label']
+                img_ids = [str(i) for i in range(len(images))]  # dummy ids if needed
+                ann_ids = img_ids
 
                 if batch_idx == 0:
                     print("Text token IDs (first 5 samples):")
@@ -63,6 +65,8 @@ def cache_embeddings_from_loaders(loaders_path, output_dir):
                     from torchvision.utils import save_image
                     save_image(images[:5], f"{output_dir}/{split}/sample_batch.png")
                     print(f"Saved sample images to {output_dir}/{split}/sample_batch.png")
+
+                print(f'Processing batch {batch_idx+1}/{len(dataloader)}', flush=True)
 
                 # Process images
                 images = images.to(device)
@@ -98,7 +102,3 @@ def cache_embeddings_from_loaders(loaders_path, output_dir):
     process_loader(train_loader, 'train')
     process_loader(val_loader, 'val')
     process_loader(test_loader, 'test')
-
-if __name__ == '__main__':
-    loaders_path = '/mimer/NOBACKUP/groups/ulio_inverse/ds-project/ProbVLM/Datasets/coco/data_loaders_coco_person_extra_26.11.pkl'
-    cache_embeddings_from_loaders(loaders_path)

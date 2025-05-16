@@ -10,8 +10,12 @@ import gc
 
 import utils.general_utils as gu
 import utils.loss_utils as lu
-import datasets
+import datasets as datasetss
+from datasets import coco
 from sklearn.metrics import confusion_matrix
+import sys
+
+
 
 
 class Base():
@@ -53,33 +57,33 @@ class Base():
         self.enforce_binary_eval      = False # for COCO gender
         self.no_penalty_person_eval   = False # for COCO gender
         if self.CFG.DATA.DATASET == 'waterbirds':
-            from datasets.waterbirds import GROUP_NAMES
+            from datasetss.waterbirds import GROUP_NAMES
             self.group_names   = GROUP_NAMES
-            self.label_mapping = datasets.waterbirds.get_label_mapping()
+            self.label_mapping = datasetss.waterbirds.get_label_mapping()
             if self.CFG.DATA.USE_CLASS_WEIGHTS:
-                from datasets.waterbirds import get_loss_upweights
+                from datasetss.waterbirds import get_loss_upweights
                 self.class_weights = get_loss_upweights(
                     bias_fraction=self.CFG.DATA.CONFOUNDING_FACTOR,
                     mode='per_class'
                 ).to(self.device)
             if self.CFG.DATA.USE_GROUP_WEIGHTS:
-                from datasets.waterbirds import get_loss_upweights
+                from datasetss.waterbirds import get_loss_upweights
                 self.group_weights = get_loss_upweights(
                     bias_fraction=self.CFG.DATA.CONFOUNDING_FACTOR,
                     mode='per_group'
                 ).to(self.device)
         elif self.CFG.DATA.DATASET == 'waterbirds_background':
-            from datasets.waterbirds_background_task import GROUP_NAMES
+            from datasetss.waterbirds_background_task import GROUP_NAMES
             self.group_names   = GROUP_NAMES
-            self.label_mapping = datasets.waterbirds_background_task.get_label_mapping()
+            self.label_mapping = datasetss.waterbirds_background_task.get_label_mapping()
             if self.CFG.DATA.USE_CLASS_WEIGHTS:
-                from datasets.waterbirds_background_task import get_loss_upweights
+                from datasetss.waterbirds_background_task import get_loss_upweights
                 self.class_weights = get_loss_upweights(
                     bias_fraction=self.CFG.DATA.CONFOUNDING_FACTOR,
                     mode='per_class'
                 ).to(self.device)
             if self.CFG.DATA.USE_GROUP_WEIGHTS:
-                from datasets.waterbirds_background_task import get_loss_upweights
+                from datasetss.waterbirds_background_task import get_loss_upweights
                 self.group_weights = get_loss_upweights(
                     bias_fraction=self.CFG.DATA.CONFOUNDING_FACTOR,
                     mode='per_group'
@@ -87,9 +91,9 @@ class Base():
         elif self.CFG.DATA.DATASET == 'coco_gender':
             if self.CFG.DATA.NUM_CLASSES == 2:
                 assert self.CFG.DATA.BINARY_EVAL
-            self.label_mapping = datasets.coco.get_label_mapping()
+            self.label_mapping = coco.get_label_mapping()
             if self.CFG.DATA.USE_CLASS_WEIGHTS:
-                from datasets.coco import get_loss_upweights
+                from coco import get_loss_upweights
                 self.class_weights = get_loss_upweights(
                     self.CFG.DATA.MIN_NEEDED,
                     binary=self.CFG.DATA.BINARY_TRAIN,
@@ -101,7 +105,7 @@ class Base():
             self.enforce_binary_eval  = self.CFG.DATA.BINARY_EVAL
             self.no_penalty_person_eval = self.CFG.DATA.NO_PENALTY_PERSON_PRED_EVAL
         elif self.CFG.DATA.DATASET == 'food_subset':
-            import datasets.food_gals
+            import datasetss.food_gals
             self.label_mapping = np.array(sorted(self.CFG.DATA.CLASSES))
         else:
             raise NotImplementedError

@@ -243,10 +243,20 @@ def multi_head_attention_forward(query: Tensor,
     attn_output_weights = F.softmax(
         attn_output_weights, dim=-1)
     attn_output_weights = F.dropout(attn_output_weights, p=dropout_p, training=training)
+# Achange was made here, might chanhe back to:
+#     # use hooks for the attention weights if necessary
+#     if attention_probs_forward_hook is not None and attention_probs_backwards_hook is not None:
+#         attention_probs_forward_hook(attn_output_weights)
+# # A change was made here, might have to remove later        
+#         attn_output_weights.requires_grad_(True)
+#         attn_output_weights.register_hook(attention_probs_backwards_hook)
 
-    # use hooks for the attention weights if necessary
-    if attention_probs_forward_hook is not None and attention_probs_backwards_hook is not None:
+    # Apply hooks and enable gradient BEFORE the tensor is used
+    if attention_probs_forward_hook is not None:
         attention_probs_forward_hook(attn_output_weights)
+
+    if attention_probs_backwards_hook is not None:
+        attn_output_weights.requires_grad_(True)  # must be set before bmm
         attn_output_weights.register_hook(attention_probs_backwards_hook)
 
     attn_output = torch.bmm(attn_output_weights, v)

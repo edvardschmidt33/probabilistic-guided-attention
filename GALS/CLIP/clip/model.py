@@ -182,9 +182,11 @@ class ResidualAttentionBlock(nn.Module):
         self.attn_grad = None
 
     def set_attn_probs(self, attn_probs):
+        print("[DEBUG] set_attn_probs triggered")
         self.attn_probs = attn_probs
 
     def set_attn_grad(self, attn_grad):
+        print("[DEBUG] set_attn_grad triggered")
         self.attn_grad = attn_grad
 
     def attention(self, x: torch.Tensor):

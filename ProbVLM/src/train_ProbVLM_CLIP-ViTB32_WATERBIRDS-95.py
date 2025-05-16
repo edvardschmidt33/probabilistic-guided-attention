@@ -2,19 +2,27 @@
 # coding: utf-8
 
 
+import sys
+# sys.path.append('../LAVIS')
+# import lavis
+
 import os
-import torch
-from torch.utils.data import DataLoader, Dataset
+
 from os.path import join as ospj
+from os.path import expanduser
 from munch import Munch as mch
 import numpy as np
+
+from ds import prepare_coco_dataloaders, prepare_flickr_dataloaders, prepare_cub_dataloaders, prepare_flo_dataloaders, prepare_cub_dataloaders_extra
+
 from utils import *
 from networks import *
 from train_probVLM import *
-import json
+
+import matplotlib.pyplot as plt
 import pickle
-# import sys
-# sys.path.append('/path/to/your/module/directory')  # e.g. '/cephyr/users/schmidte/Alvis/Paric_nolavis/ProbVLM/src'
+import os
+
 
 from cache_embeddings_from_loader import cache_embeddings_from_loaders
 
@@ -23,10 +31,10 @@ from cache_embedding import CachedEmbeddingDataset, create_dataloaders
 
 
 if __name__ == '__main__':
-    dataset = 'waterbird_1.0_forest2water2'
+    dataset = 'waterbird_complete95_forest2water2'
     data_dir = ospj('/mimer/NOBACKUP/groups/ulio_inverse/ds-project/ProbVLM/Datasets/', dataset)
-    pkl_file = ospj('/mimer/NOBACKUP/groups/ulio_inverse/ds-project/ProbVLM/Datasets/CUB/', 'data_loaders_waterbirds_12.12.pkl')
-    output_dir = 'embeddings/cub'
+    pkl_file = ospj('/mimer/NOBACKUP/groups/ulio_inverse/ds-project/ProbVLM/Datasets/CUB/', 'data_loaders_waterbirds_95_17.02.pkl')
+    output_dir = 'embeddings/waterbirds95_dummy'
 
     # Step 1: Cache embeddings
     cache_embeddings_from_loaders(pkl_file, output_dir=output_dir)
@@ -37,10 +45,10 @@ if __name__ == '__main__':
     test_split_dir = ospj(output_dir, 'test')
 
     # Get train and val from training split
-    train_loader, val_loader = create_dataloaders(train_split_dir, batch_size=8192, num_workers=12, split_train_val=True)
+    train_loader, val_loader = create_dataloaders(train_split_dir, batch_size=32768, num_workers=12, split_train_val=True)
 
     # Load test set as full loader
-    test_loader = create_dataloaders(test_split_dir, batch_size=8192, num_workers=12, split_train_val=False)
+    test_loader = create_dataloaders(test_split_dir, batch_size=32768, num_workers=12, split_train_val=False)
 
 
     # clip_net = load_model('cuda')
@@ -65,7 +73,7 @@ if __name__ == '__main__':
         init_lr=8e-5,
         num_epochs=200,
         eval_every=5,
-        ckpt_path='/cephyr/users/schmidte/Alvis/Paric_nolavis/ckpt/ProbVLM_waterbirds_200epochs',
+        ckpt_path='/cephyr/users/schmidte/Alvis/Paric_nolavis/ckpt/ProbVLM_waterbirds_95_200epochs_dummy',
         T1=1e0,
         T2=1e-4,
         use_cached_embeddings=True

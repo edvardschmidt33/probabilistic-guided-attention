@@ -62,7 +62,7 @@ if __name__ == '__main__':
     output_dir = 'embeddings/coco'
 
     # Step 1: Cache embeddings
-    # cache_embeddings_from_loaders(pkl_file, output_dir=output_dir)
+    cache_embeddings_from_loaders(pkl_file, output_dir=output_dir)
 
     # Step 2: Create dataloaders from cached embeddings
     train_split_dir = ospj(output_dir, 'train')

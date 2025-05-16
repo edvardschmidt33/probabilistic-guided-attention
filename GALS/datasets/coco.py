@@ -14,8 +14,10 @@ def get_label_mapping():
 
 class COCOGender(torch.utils.data.Dataset):
     def __init__(self, root, cfg, split='train', transform=None, size=None, compute_all=False):
+        base_dir = "/mimer/NOBACKUP/groups/ulio_inverse/ds-project/GALS"
+        self.base_dir = base_dir
+        self.original_root = os.path.join(base_dir, os.path.expanduser(root))
         self.cfg = cfg
-        self.original_root = os.path.expanduser(root)
         self.transform  = transform
         self.split      = split
         self.root       = os.path.join(self.original_root, 'COCO')
@@ -47,7 +49,7 @@ class COCOGender(torch.utils.data.Dataset):
         else:
             self.binary = self.cfg.DATA.BINARY_EVAL
 
-        with open(os.path.join(self.root, 'COCO_gender', 'captions_only_valtrain2014.json')) as f:
+        with open(os.path.join(self.base_dir, 'data/COCO/COCO_gender', 'captions_only_valtrain2014.json')) as f:
             captions = json.load(f)
         captions = captions['annotations']
         id2captions = {}
@@ -60,9 +62,9 @@ class COCOGender(torch.utils.data.Dataset):
 
         # For convenience, option to compute all filenames (train, val, and test)
         if compute_all:
-            train_coco = COCO('data/COCO/annotations/instances_train2014.json')
+            train_coco = COCO(os.path.join(self.base_dir, 'data/COCO/annotations/instances_train2014.json'))
             train_filenames, train_labels, train_ids = self.load_filenames_labels(train_coco, 'train')
-            val_coco = COCO('data/COCO/annotations/instances_val2014.json')
+            val_coco = COCO(os.path.join(self.base_dir, 'data/COCO/annotations/instances_val2014.json'))
             val_filenames,   val_labels, val_ids  = self.load_filenames_labels(val_coco, 'val')
             test_filenames, test_labels, test_ids = self.load_filenames_labels(val_coco, 'test')
             self.data = np.concatenate((train_filenames, val_filenames, test_filenames))
@@ -71,9 +73,9 @@ class COCOGender(torch.utils.data.Dataset):
             self.data = None
         
         coco = COCO(
-            'data/COCO/annotations/instances_{}2014.json'.format(
+            os.path.join(self.base_dir, 'data/COCO/annotations/instances_{}2014.json'.format(
                 'train' if split == 'train' else 'val'
-            )
+            ))
         )
         """
         coco = COCO(
