@@ -54,6 +54,7 @@ Svante Andersson - [@linkedin](https://www.linkedin.com/in/svante-andersson-673b
 Olle Flygar - [@linkedin](https://www.linkedin.com/in/olle-flygar-2769a3325/)  
 Leo Kemetli - [@linkedin](https://www.linkedin.com/in/leo-lindström-kemetli-552a30290/)
 Edvard Schmidt - [@linkedin](https://www.linkedin.com/in/edvard-schmidt-05a014326/)
+
 <!-- Links -->
 ## References
 
