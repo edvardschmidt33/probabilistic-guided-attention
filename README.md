@@ -22,7 +22,7 @@ probabilistic embeddings in a language guided attention learning task.
 ---
 ## Introduction
 This is the PyTorch implementation the project. The point of entry in this repository is the ProbVLM folder for training the adapter to later be used for attention map generation. Run the
-*train_ProbVLM_...` appropariate for the model and dataset. Then attention maps can be generated throught the `Attention_maps_for...` file.
+`train_ProbVLM_...` appropariate for the model and dataset. Then attention maps can be generated throught the `Attention_maps_for...` file.
 
 In the BayesVLM framework one can directly run the attention map generating file 'attention_waterXX_Bayes.py' to generate attention maps via the RISE based approach using a 500-mask based saliency map.
 
