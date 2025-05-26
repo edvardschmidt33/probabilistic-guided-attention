@@ -22,11 +22,11 @@ probabilistic embeddings in a language guided attention learning task.
 ---
 ## Introduction
 This is the PyTorch implementation the project. The point of entry in this repository is the ProbVLM folder for training the adapter to later be used for attention map generation. Run the
-'train_ProbVLM_...' appropariate for the model and dataset. Then attention maps can be generated throught the 'Attention_maps_for...' file.
+*train_ProbVLM_...` appropariate for the model and dataset. Then attention maps can be generated throught the `Attention_maps_for...` file.
 
 In the BayesVLM framework one can directly run the attention map generating file 'attention_waterXX_Bayes.py' to generate attention maps via the RISE based approach using a 500-mask based saliency map.
 
-Finnally, to run the downstream task, run 'main.py' in the GALS folder with adequate parsers. See references for a thorough walkthrough.
+Finnally, to run the downstream task, run `main.py` in the GALS folder with adequate parsers. See references for a thorough walkthrough.
 
 
 
@@ -45,14 +45,13 @@ Use pip to install the following packages also necesary: XX, XX, XX, XX.
 The BayesVLM code can be run on the same requirements.
 Use the requirements.txt found in GASL in a similar manor along with the config files (.yaml) found in '/configs' foun in the GALS folder.
  
-<!-- Run Locally -->
 
 ---
 <!-- Contact -->
 ## Contact
 Svante Andersson - [@linkedin](https://www.linkedin.com/in/svante-andersson-673b2921a/)  
 Olle Flygar - [@linkedin](https://www.linkedin.com/in/olle-flygar-2769a3325/)  
-Leo Kemetli - [@linkedin](https://www.linkedin.com/in/leo-lindström-kemetli-552a30290/)
+Leo Kemetli - [@linkedin](https://www.linkedin.com/in/leo-lindström-kemetli-552a30290/)  
 Edvard Schmidt - [@linkedin](https://www.linkedin.com/in/edvard-schmidt-05a014326/)
 
 <!-- Links -->
