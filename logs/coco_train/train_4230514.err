@@ -1,6 +1,0 @@
-Traceback (most recent call last):
-  File "/cephyr/users/schmidte/Alvis/Paric_nolavis/ProbVLM/src/train_ProbVLM_CLIP-ViTB32.py", line 20, in <module>
-    from networks import *
-  File "/cephyr/users/schmidte/Alvis/Paric_nolavis/ProbVLM/src/networks.py", line 11, in <module>
-    from utils_lavis import *
-ModuleNotFoundError: No module named 'utils_lavis'
