@@ -7,13 +7,16 @@ from torchvision import models
 import numpy as np
 import matplotlib.pyplot as plt
 import gc
-
+import sys
+sys.path.append('/cephyr/users/schmidte/Alvis/Paric_nolavis/GALS')
 import utils.general_utils as gu
 import utils.loss_utils as lu
 import datasets as datasetss
 from datasets import coco
+import datasets.waterbirds
+from datasets import waterbirds as waterbirds
+from datasets import waterbirds_background_task as waterbirds_background_task
 from sklearn.metrics import confusion_matrix
-import sys
 
 
 
@@ -57,33 +60,33 @@ class Base():
         self.enforce_binary_eval      = False # for COCO gender
         self.no_penalty_person_eval   = False # for COCO gender
         if self.CFG.DATA.DATASET == 'waterbirds':
-            from datasetss.waterbirds import GROUP_NAMES
+            from datasets.waterbirds import GROUP_NAMES
             self.group_names   = GROUP_NAMES
-            self.label_mapping = datasetss.waterbirds.get_label_mapping()
+            self.label_mapping = datasets.waterbirds.get_label_mapping()
             if self.CFG.DATA.USE_CLASS_WEIGHTS:
-                from datasetss.waterbirds import get_loss_upweights
+                from datasets.waterbirds import get_loss_upweights
                 self.class_weights = get_loss_upweights(
                     bias_fraction=self.CFG.DATA.CONFOUNDING_FACTOR,
                     mode='per_class'
                 ).to(self.device)
             if self.CFG.DATA.USE_GROUP_WEIGHTS:
-                from datasetss.waterbirds import get_loss_upweights
+                from datasets.waterbirds import get_loss_upweights
                 self.group_weights = get_loss_upweights(
                     bias_fraction=self.CFG.DATA.CONFOUNDING_FACTOR,
                     mode='per_group'
                 ).to(self.device)
         elif self.CFG.DATA.DATASET == 'waterbirds_background':
-            from datasetss.waterbirds_background_task import GROUP_NAMES
+            from waterbirds_background_task import GROUP_NAMES
             self.group_names   = GROUP_NAMES
-            self.label_mapping = datasetss.waterbirds_background_task.get_label_mapping()
+            self.label_mapping = waterbirds_background_task.get_label_mapping()
             if self.CFG.DATA.USE_CLASS_WEIGHTS:
-                from datasetss.waterbirds_background_task import get_loss_upweights
+                from waterbirds_background_task import get_loss_upweights
                 self.class_weights = get_loss_upweights(
                     bias_fraction=self.CFG.DATA.CONFOUNDING_FACTOR,
                     mode='per_class'
                 ).to(self.device)
             if self.CFG.DATA.USE_GROUP_WEIGHTS:
-                from datasetss.waterbirds_background_task import get_loss_upweights
+                from waterbirds_background_task import get_loss_upweights
                 self.group_weights = get_loss_upweights(
                     bias_fraction=self.CFG.DATA.CONFOUNDING_FACTOR,
                     mode='per_group'

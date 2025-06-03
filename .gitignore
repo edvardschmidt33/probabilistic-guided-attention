@@ -3,3 +3,4 @@
 \!BayesVLM/**
 \!.gitignore
 BayesVLM/masks.npy
+**.npy

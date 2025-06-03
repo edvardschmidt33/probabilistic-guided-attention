@@ -1,19 +1,10 @@
 import torch
 import torch.nn as nn
 from tqdm import tqdm
-def normalize(sal):
-    # sal = tensor of shape 1,1,H,W
-    B, C, H, W = sal.shape
-    sal = sal.view(B, -1)
-    sal_max = sal.max(dim=1, keepdim=True)[0]
-    sal_max[torch.where(sal_max == 0)] = 1. # prevent divide by 0
-    sal -= sal.min(dim=1, keepdim=True)[0]
-    sal /= sal_max
-    sal = sal.view(B, C, H, W)
-    return sal
+
 
 class RISEWithAdapter(nn.Module):
-    def __init__(self, clip_model, adapter, text_embedding, input_size, gpu_batch=50, num_samples=100):
+    def __init__(self, clip_model, adapter, text_embedding, input_size, gpu_batch=16000, num_samples=50):
         super(RISEWithAdapter, self).__init__()
         self.clip_model = clip_model.eval()           # CLIP image encoder
         self.adapter = adapter #.eval()                 # Adapter for embedding sampling
@@ -52,11 +43,13 @@ class RISEWithAdapter(nn.Module):
                     self.num_samples,
                     bayes_results=bayes_results
                 )
+                
                 #Normailze embedding tensor/matrix
                 sampled_embeddings = sampled_embeddings / sampled_embeddings.norm(dim=-1, keepdim=True)
-                
+                sampled_embeddings = sampled_embeddings.half()
                 #Compute cosine similarities
-                similarities = (sampled_embeddings @ text_embedding.T).squeeze(-1)
+                similarities = (sampled_embeddings @ text_embedding.T.half()).squeeze(-1)
+                # similarities = (sampled_embeddings @ text_embedding.T).squeeze(-1)
                 image_embedding = image_embedding / image_embedding.norm(dim=-1, keepdim = True)
                 #Weight similarities by probcosine distribution if available
                 if bayes_results is not None:
@@ -68,9 +61,8 @@ class RISEWithAdapter(nn.Module):
                 #compute original similarity score
                 mean_similarity = similarities.mean().item()
                 delta_similarity = mean_similarity - orig_similarity # Positive if similarity drops
-                print(f"Mask {i}: Var={sim_variance:.8f}, Mean={mean_similarity:.4f}, Delta={delta_similarity:.4f}")
+            
                 uncertainty_weight = sim_variance / (sim_variance + 1e-3)  # Normalize to [0, 1]-ish range
-                print(f'Uncertainty weight: {uncertainty_weight }')
                 if bayes_results is not None:
                     prob_mean = bayes_results['mean'].squeeze().mean().item()
                     combined_score = delta_similarity * (1 + 0.7 * uncertainty_weight) * prob_mean
@@ -79,8 +71,7 @@ class RISEWithAdapter(nn.Module):
 
             saliency += combined_score * self.masks[i, 0]
         saliency_norm = (saliency - saliency.min()) / (saliency.max() - saliency.min() + 1e-8) # saliency / N
-        saliency_unnorm = saliency
-        saliency_unnorm -= saliency_unnorm.min() 
+        saliency_unnorm = saliency - saliency.min()
 
         probs = 1
         return saliency_norm, saliency_unnorm #, probs

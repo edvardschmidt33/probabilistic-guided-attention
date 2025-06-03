@@ -4,7 +4,7 @@ DATA:
   NUM_CLASSES: 2
 
   # Bias level, between [0, 1.0]. Make sure this is consistent with the actual dataset being used.
-  CONFOUNDING_FACTOR: 1.0
+  CONFOUNDING_FACTOR: 0.95
 
   # Directory under ./data holding dataset
   WATERBIRDS_DIR: "waterbird_complete95_forest2water2"

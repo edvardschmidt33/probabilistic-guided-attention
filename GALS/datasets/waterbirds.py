@@ -13,8 +13,10 @@ def get_label_mapping():
 
 class Waterbirds(torch.utils.data.Dataset):
     def __init__(self, root, cfg, split='train', transform=None):
+        base_dir = "/mimer/NOBACKUP/groups/ulio_inverse/ds-project/GALS"
         self.cfg = cfg
-        self.original_root       = os.path.expanduser(root)
+        self.bas_dir = base_dir
+        self.original_root       = os.path.join(base_dir, os.path.expanduser(root))
         self.transform  = transform
         self.split      = split
         self.root       = os.path.join(self.original_root, cfg.DATA.WATERBIRDS_DIR)
@@ -32,7 +34,7 @@ class Waterbirds(torch.utils.data.Dataset):
         ])
 
         # metadata
-        self.metadata_df = pd.read_csv('../GALS/data/waterbird_1.0_forest2water2/metadata_ProbVLM_final.csv')
+        self.metadata_df = pd.read_csv('/mimer/NOBACKUP/groups/ulio_inverse/ds-project/GALS/data/waterbird_complete95_forest2water2/metadata_ProbVLM_final.csv')
 
         # Get the y values
         self.labels = self.metadata_df['y'].values
@@ -54,13 +56,13 @@ class Waterbirds(torch.utils.data.Dataset):
             'test': 2
         }
 
-        self.seg_data  =  np.array([os.path.join(root, 'CUB_200_2011/segmentations',
+        self.seg_data  =  np.array([os.path.join(self.original_root, 'CUB_200_2011/segmentations',
                                                  path.replace('.jpg', '.png')) for path in self.filename_array])
 
         self.data = np.array([os.path.join(self.root, filename) for filename in self.filename_array])
-
+### Probably change slef.root to personal directory for the attention maps
         if self.return_attention:
-            self.attention_data = np.array([os.path.join(self.root, cfg.DATA.ATTENTION_DIR,
+            self.attention_data = np.array([os.path.join('/cephyr/users/schmidte/Alvis/Paric_nolavis/GALS/data/waterbird_complete95_forest2water2', cfg.DATA.ATTENTION_DIR,
                                                 path.replace('.jpg', '.pth')) for path in self.filename_array])
 
         mask = self.split_array == self.split_dict[self.split]

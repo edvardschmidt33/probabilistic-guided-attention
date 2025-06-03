@@ -7,10 +7,113 @@ from torchvision.transforms import ToTensor, ToPILImage
 from pathlib import Path
 import os
 from tqdm import tqdm
+from torch.nn import functional as F
+
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from PIL import Image
+
+
+### Functions from Attention_maps_COCO...
+def normalize(sal):
+    # sal = tensor of shape 1,1,H,W
+    B, C, H, W = sal.shape
+    sal = sal.view(B, -1)
+    sal_max = sal.max(dim=1, keepdim=True)[0]
+    sal_max[torch.where(sal_max == 0)] = 1. # prevent divide by 0
+    sal -= sal.min(dim=1, keepdim=True)[0]
+    sal /= sal_max
+    sal = sal.view(B, C, H, W)
+    return sal
+
+def token_to_text(coded_text):
+    
+    # Convert indices to tokens
+    tokens = [tokenizer.convert_ids_to_tokens(indices.tolist()) for indices in coded_text]
+    
+    # Define a list of unwanted tokens
+    unwanted_tokens = {'<|startoftext|>', '<|endoftext|>', '.', '!', '</w>'}
+
+    # Filter the tokens to exclude unwanted ones and keep only the actual words
+    filtered_words = [token[:-4] if token.endswith('</w>') else token for token in tokens if token not in unwanted_tokens]
+
+    # Convert the list of words into a single string
+    result_string = ' '.join(filtered_words)
+    
+    return [result_string]
+
+
+
+### Functions from attention_utils_p
+def show_cam_on_image(img, attention):
+
+    denom = (attention.max() - attention.min())
+    if denom > 0:
+        attention = (attention - attention.min()) / (attention.max() - attention.min())
+    else:
+        attention = torch.zeros_like(torch.from_numpy(attention)) if isinstance(attention, np.ndarray) else torch.zeros_like(attention)
+        attention = attention.numpy()
+    colormap = cm.get_cmap('jet')
+    heatmap = colormap(attention)[:, :, :3]  # Drop alpha channel if present
+    heatmap = np.float32(heatmap)
+    if img.dtype != np.float32:
+        img = np.float32(img) / 255.0
+
+    if heatmap.shape[:2] != img.shape[:2]:
+        heatmap = np.array(Image.fromarray((heatmap * 255).astype(np.uint8)).resize((img.shape[1], img.shape[0]), Image.BILINEAR)) / 255.0
+
+    cam = heatmap + img
+    cam = cam / np.max(cam)
+    
+    return cam
+
+def plot_attention_helper_p(image, attentions, unnormalized_attentions, probs, text_list,
+                          save_vis_path=None, resize=False):
+    image_vis = image[0].permute(1, 2, 0).data.cpu().numpy()
+    image_vis = (image_vis - image_vis.min()) / (image_vis.max() - image_vis.min())
+    
+    if not resize:
+        sal = unnorm_attentions[0]
+        if sal.dim() == 2:
+            sal = sal.unsqueeze(0).unsqueeze(0)
+        elif sal.dim() == 3:
+            sal = sal.unsqueeze(0)
+        sal = F.interpolate(
+            sal,
+            image.shape[2:], mode="bilinear", align_corners=False
+        )
+        sal = normalize(sal)[0][0]
+    else:
+        sal = attentions[0][0]
+    vis = show_cam_on_image(image_vis, sal.cpu().numpy())
+    vis = np.uint8(255 * vis)
+    #attention_vis.append(vis)
+    plot_p(probs, [vis], text_list, image_vis, save_path=save_vis_path)
+
+def plot_p(probs, attention_vis, text_list, image_vis, save_path=None):
+
+    fig, ax = plt.subplots(1,1+len(text_list),figsize=(5*(1+len(text_list)),6))
+    # OG image
+    ax[0].imshow(image_vis)
+    ax[0].axis('off')
+    # Saliency map
+    ax[1].imshow(attention_vis[0])
+    ax[1].axis('off')
+    
+    ax[1].set_title('{}\n{:.3f}'.format(text_list[0], float(probs[0])),
+                       fontsize=14)
+
+    plt.tight_layout()
+    if save_path is not None:
+        plt.savefig(save_path, bbox_inches='tight')
+    else:
+        plt.show()
+    return
+
+
 
 # Set number of workers for DataLoader
-torch.multiprocessing.set_sharing_strategy('file_system')
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 
 # Cache for BayesVLM results
 _bayes_cache = {}
@@ -57,7 +160,7 @@ def adapter(embedding, num_samples=100, bayes_results=None, image_path=None):
         samples = torch.nn.functional.normalize(samples, p=2, dim=-1)
         return samples
     except Exception as e:
-        print(f"Error in adapter: {str(e)}")
+        # print(f"Error in adapter: {str(e)}")
         # Fallback behavior
         D = embedding.shape[-1]
         noise = torch.randn((num_samples, D), device=embedding.device) * 0.1
@@ -65,7 +168,7 @@ def adapter(embedding, num_samples=100, bayes_results=None, image_path=None):
         samples = torch.nn.functional.normalize(samples, p=2, dim=-1)
         return samples
 
-def main(model, file_path, text_list, img_f, text_f, tokenized_text, tokenized_img, layer, device,
+def RISE_with_Bayes(model, file_path, text_list, img_f, text_f, tokenized_text, tokenized_img, layer, device,
          plot_vis=False, save_vis_path=None, resize=False):
     # Load CLIP model
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -89,14 +192,16 @@ def main(model, file_path, text_list, img_f, text_f, tokenized_text, tokenized_i
     image = Image.open(image_path).convert("RGB")
     image = image.resize((224, 224))
     if tokenized_text is not None:
-        pass #untokenize tokenized text and return text
+        # text = tokenized_text
+        text = clip.tokenize(["an image of a bird"]).to(device)
+
     else:
-        text = clip.tokenize(["a photo of a bird"]).to(device)
+        text = clip.tokenize(["an image of a bird"]).to(device)
 
     # Get BayesVLM results - Fix the hessian directory path
     current_dir = Path(__file__).parent.absolute()
     # Change her to alvis directory
-    hessian_dir = '/Users/Edvard/Desktop/Kandidatarbete/BayesVLM/hessians/hessian_CLIP-ViT-B-32-laion2B-s34B-b79K'
+    hessian_dir = '/cephyr/users/schmidte/Alvis/Paric_nolavis/BayesVLM/hessians/hessian_CLIP-ViT-B-32-laion2B-s34B-b79K'
     
     # Print the path to verify
     print(f"Looking for hessian files in: {hessian_dir}")
@@ -121,23 +226,23 @@ def main(model, file_path, text_list, img_f, text_f, tokenized_text, tokenized_i
         text_embedding = torch.nn.functional.normalize(text_embedding, p=2, dim=-1)
 
     # Create a wrapper for the adapter that includes the image path
-    def adapter_with_path(embedding, num_samples=100, bayes_results=None):
+    def adapter_with_path(embedding, num_samples=50, bayes_results=None):
         return adapter(embedding, num_samples, bayes_results, image_path=image_path)
 
     # RISE with BayesVLM-informed Adapter
-    from RISEWithAdapter import RISEWithAdapter
+    from RISEWithAdapterBatch import RISEWithAdapter
     from RISE import RISE
 
     # Generate RISE masks
     input_size = (224, 224)
     rise = RISE(model, input_size)
 
-    if not os.path.exists('masks.npy'):
+    if not os.path.exists('masks500.npy'):
         print("Generating new masks...")
-        rise.generate_masks(N=1000, s=8, p1=0.5)
+        rise.generate_masks(N=500, s=8, p1=0.5, savepath= 'masks500.npy')
     else:
         print("Loading existing masks...")
-        rise.load_masks('masks.npy')
+        rise.load_masks('masks500.npy')
 
     # Initialize RISEWithAdapter with the wrapped adapter
     explainer = RISEWithAdapter(
@@ -145,7 +250,7 @@ def main(model, file_path, text_list, img_f, text_f, tokenized_text, tokenized_i
         adapter=adapter_with_path,
         text_embedding=text_embedding,
         input_size=input_size,
-        gpu_batch=50, #make this a lot bigger with alvis
+        gpu_batch= 1024, #make this a lot bigger with alvis
         num_samples=50
     )
     explainer.set_masks(rise.masks)
@@ -159,42 +264,15 @@ def main(model, file_path, text_list, img_f, text_f, tokenized_text, tokenized_i
             print(f"Error computing saliency map: {str(e)}")
             raise
 
-    plot = True
-    # Print statistics
-    if plot:
-        print("\nSaliency Map Statistics:")
-        print(f"Min: {saliency_norm.min().item():.4f}")
-        print(f"Max: {saliency_norm.max().item():.4f}")
-        print(f"Mean: {saliency_norm.mean().item():.4f}")
-        print(f"Std Dev: {saliency_norm.std().item():.4f}")
+    if save_vis_path:
+        plot_attention_helper_p(image, attentions, unnormalized_attentions, probs, text_list,
+                          save_vis_path=save_vis_path, resize=resize)
 
-    # Visualize
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-
-        ax1.imshow(image)
-
-        ax1.set_title("Original Image")
-        im = ax1.imshow(saliency_unnorm, cmap='jet', alpha=0.5)
-        plt.colorbar(im, ax=ax1, label='Saliency value')
-        ax1.set_title("Unnorm Saliency Map")
-        ax1.axis('off')
-
-        ax2.imshow(image)
-        im = ax2.imshow(saliency_norm, cmap='jet', alpha=0.5)
-        plt.colorbar(im, ax=ax2, label='Saliency value')
-        ax2.set_title("Norm Saliency Map")
-        ax2.axis('off')
-
-        plt.tight_layout()
-        plt.show()
     probs = 1
 
     return {
-        'unnormalized_attentions': saliency_unnorm,
+        'unnorm_attentions': saliency_unnorm,
         'attentions': saliency_norm,
         'text_list': text_list,
         'probs': probs
     }
-
-if __name__ == "__main__":
-    main(model= None, file_path= None, text_list = None, img_f = None, text_f= None, tokenized_text= None, tokenized_img= None, layer =  None, device = None)

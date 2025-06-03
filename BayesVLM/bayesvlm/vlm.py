@@ -31,9 +31,9 @@ class EncoderResult:
     residuals: torch.Tensor
 
     def __init__(self, embeds, activations, residuals=None):
-        self.embeds = embeds
-        self.activations = activations
-        self.residuals = residuals if residuals is not None else torch.zeros_like(embeds)
+        self.embeds = embeds.cpu()
+        self.activations = activations.cpu()
+        self.residuals = (residuals if residuals is not None else torch.zeros_like(embeds)).cpu()
 
     def clone(self):
         return EncoderResult(
@@ -58,7 +58,7 @@ class EncoderResult:
                 activations=self.activations[idx],
                 residuals=self.residuals[idx],
             )
-        return self.embeds[idx], self.activations[idx], self.residuals[idx]
+        return self.embeds[idx].cpu(), self.activations[idx].cpu(), self.residuals[idx].cpu()
 
 @dataclass
 class ProbabilisticLogits:

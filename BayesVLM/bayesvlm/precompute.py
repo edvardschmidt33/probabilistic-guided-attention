@@ -52,6 +52,9 @@ def make_predictions(
             activations=img_activations.to(device),
             residuals=img_residuals.to(device),
         )
+### Edited for attention map generation
+        img_outputs_batch = img_outputs_batch.to(device)
+        text_outputs = text_outputs.to(device)
         logits = clip(img_outputs_batch, text_outputs, map_estimate=map_estimate)
         means.append(logits.mean.detach().cpu())
         vars.append(logits.var.detach().cpu())

@@ -12,7 +12,8 @@ from datasets import normalizations
 from typing import Union, List
 from simple_tokenizer import SimpleTokenizer as _Tokenizer
 
-
+import torch.multiprocessing as mp
+mp.set_start_method('spawn', force=True)
 from torch.utils.data import DataLoader, random_split
 
 parser = argparse.ArgumentParser()
